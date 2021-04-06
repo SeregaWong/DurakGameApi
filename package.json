@@ -1,0 +1,27 @@
+{
+  "name": "durak-game-api",
+  "version": "1.0.0",
+  "description": "simple card game api",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "lint": "tslint --project tslint.json",
+    "clear": "if exist dist rd /q /s dist",
+    "build": "(npm run clear || 0) && tsc",
+    "publish": "npm run build && npm run lint && npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeregaWong/DurakGameApi.git"
+  },
+  "author": "SeregaWong",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SeregaWong/DurakGameApi/issues"
+  },
+  "homepage": "https://github.com/SeregaWong/DurakGameApi#readme",
+  "devDependencies": {
+    "typescript": "^4.2.3"
+  },
+  "files": ["dist/**/*"]
+}
