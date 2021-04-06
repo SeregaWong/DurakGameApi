@@ -1,5 +1,5 @@
 {
-  "name": "durak-game-api",
+  "name": "sw-durak-game-api",
   "version": "1.0.0",
   "description": "simple card game api",
   "main": "dist/index.js",
@@ -23,5 +23,7 @@
   "devDependencies": {
     "typescript": "^4.2.3"
   },
-  "files": ["dist/**/*"]
+  "files": [
+    "dist/**/*"
+  ]
 }
