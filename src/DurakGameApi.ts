@@ -178,7 +178,7 @@ export class DurakGame {
             }
             const attackCard = game.table.attackCards[place];
 
-            if (!attackCard) {
+            if (!attackCard || !!game.table.defenceCards[place]) {
                 throw new Error('wrong place');
             }
 
@@ -198,6 +198,17 @@ export class DurakGame {
 
             game.takeAwayCard(player, card);
             game.table.defenceCards[place] = card;
+
+
+            if (
+                game.defenceCardsAmount === game.maxAttackCardsAmountNow
+                ||
+                !game.getPlayerCards(game.attackPlayer).length
+                ||
+                !game.getPlayerCards(game.defencePlayer).length
+                ) {
+                this.done(game, player, {type: 'done'});
+            }
         },
         done(game, player) {
 
@@ -207,11 +218,7 @@ export class DurakGame {
                     !!game.getPlayerCards(game.attackPlayer).length
                     &&
                     !!game.getPlayerCards(game.defencePlayer).length
-                    ||
-                    game.table.attackCards.length
-                    !==
-                    game.defenceCardsAmount
-                    ) {
+                ) {
                     throw new Error('cannot done');
                 }
             } else {
@@ -220,6 +227,10 @@ export class DurakGame {
                     throw new Error('cannot done');
                 }
 
+            }
+
+            if (game.table.attackCards.length !== game.defenceCardsAmount) {
+                throw new Error('cannot done');
             }
 
             game.toStep();
