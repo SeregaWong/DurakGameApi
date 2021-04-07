@@ -60,6 +60,7 @@ export namespace DurakGame {
         outGameCards: Card[];
         trumpCard: Card;
         deckCardsLeftAmount: number;
+        wasTaken: boolean;
     }
 
     export interface PersonalGameState extends CommonGameState {
@@ -294,6 +295,7 @@ export class DurakGame {
             table: this.table,
             trumpCard: this.trumpCard,
             deckCardsLeftAmount: this.deck.length,
+            wasTaken: this.wasTaken,
         };
         const {
             player1,
