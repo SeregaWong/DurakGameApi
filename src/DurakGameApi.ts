@@ -87,6 +87,8 @@ export class DurakGame {
 
     private step = 0;
 
+    private lastWasTaken = false;
+
     private get maxAttackCardsAmountNow() {
         return this.step === 1 ? 5 : 6;
     }
@@ -230,6 +232,7 @@ export class DurakGame {
 
             game.addPlayerCards(player, game.allTableCards);
             game.clearTable();
+            game.lastWasTaken = true;
             game.toStep();
         },
     };
@@ -269,7 +272,12 @@ export class DurakGame {
     private toStep() {
         this.step++;
         this.dealСards();
-        this.reverseAttackPlayer();
+
+        if (this.lastWasTaken) {
+            this.lastWasTaken = false;
+        } else {
+            this.reverseAttackPlayer();
+        }
 
         if (!this.player1Cards.length) {
             if (!this.player2Cards.length) {
