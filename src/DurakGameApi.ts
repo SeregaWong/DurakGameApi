@@ -358,7 +358,7 @@ export class DurakGame {
         const playerCards = this.getPlayerCards(player);
 
         const newCards = playerCards
-            .filter(({suit, val}) => card.suit === suit && card.val === val);
+            .filter(({suit, val}) => !(card.suit === suit && card.val === val));
 
         if (newCards.length !== playerCards.length - 1) {
             throw new Error('have no card');
