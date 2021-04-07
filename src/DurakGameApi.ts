@@ -87,7 +87,7 @@ export class DurakGame {
 
     private step = 0;
 
-    private lastWasTaken = false;
+    private wasTaken = false;
 
     private get maxAttackCardsAmountNow() {
         return this.step === 1 ? 5 : 6;
@@ -172,7 +172,7 @@ export class DurakGame {
             }
         },
         defence(game, player, {card, place}) {
-            if (player === game.attackPlayer) {
+            if (player === game.attackPlayer || game.wasTaken) {
                 throw new Error('cannot defence');
             }
             const attackCard = game.table.attackCards[place];
@@ -221,19 +221,13 @@ export class DurakGame {
 
             }
 
-            game.outGameCards.push(...game.allTableCards);
-            game.clearTable();
             game.toStep();
         },
         take(game, player) {
             if (player === game.attackPlayer) {
                 throw new Error('cannot take');
             }
-
-            game.addPlayerCards(player, game.allTableCards);
-            game.clearTable();
-            game.lastWasTaken = true;
-            game.toStep();
+            game.wasTaken = true;
         },
     };
 
@@ -271,13 +265,17 @@ export class DurakGame {
 
     private toStep() {
         this.step++;
-        this.dealСards();
 
-        if (this.lastWasTaken) {
-            this.lastWasTaken = false;
+        if (this.wasTaken) {
+            this.wasTaken = false;
+            this.addPlayerCards(this.defencePlayer, this.allTableCards);
         } else {
             this.reverseAttackPlayer();
+            this.outGameCards.push(...this.allTableCards);
         }
+
+        this.clearTable();
+        this.dealСards();
 
         if (!this.player1Cards.length) {
             if (!this.player2Cards.length) {
