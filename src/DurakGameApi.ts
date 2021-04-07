@@ -239,6 +239,10 @@ export class DurakGame {
         private readonly player2: DurakPlayerApi,
         private readonly onWin: DurakGame.WinHandler,
     ) {
+
+        player1.setGame(this);
+        player2.setGame(this);
+
         this.toStep();
         this.onUpdate();
     }
