@@ -211,6 +211,12 @@ export class DurakGame {
                     ) {
                     throw new Error('cannot done');
                 }
+            } else {
+
+                if (!game.table.attackCards.length) {
+                    throw new Error('cannot done');
+                }
+
             }
 
             game.outGameCards.push(...game.allTableCards);
