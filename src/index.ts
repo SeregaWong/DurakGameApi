@@ -1,3 +1,3 @@
 
-export {DurakGame} from './DurakGameApi';
-export {DurakPlayerApi} from './DurakPlayerApi';
+export { DurakGame } from './DurakGameApi';
+export { DurakPlayerApi } from './DurakPlayerApi';
