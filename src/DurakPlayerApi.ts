@@ -8,8 +8,7 @@ export abstract class DurakPlayerApi {
         this.game = game;
     }
 
-    public onUpdate(state: DeepReadonly<DurakGame.PersonalGameState>) {
-    }
+    abstract onUpdate(state: DeepReadonly<DurakGame.PersonalGameState>): void;
 
     public update(action: DurakGame.Action) {
         this.game.update(this, action);
