@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "lint": "tslint --project tslint.json",
-    "clear": "if exist dist rd /q /s dist",
+    "clear": "rimraf dist",
     "build": "(npm run clear || 0) && tsc",
     "package-publish": "npm run build && npm run lint && npm publish"
   },
@@ -21,7 +21,8 @@
   },
   "homepage": "https://github.com/SeregaWong/DurakGameApi#readme",
   "devDependencies": {
-    "typescript": "^4.2.3"
+    "typescript": "^4.2.3",
+    "rimraf": "^3.0.2"
   },
   "files": [
     "dist/**/*"
