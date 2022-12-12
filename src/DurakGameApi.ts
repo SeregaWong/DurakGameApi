@@ -75,7 +75,7 @@ export namespace DurakGame {
 export class DurakGame {
 
   private readonly deck = DurakGame.getCardsDeck();
-  private readonly trumpCard = this.deck[0];
+  public readonly trumpCard = this.deck[0];
   private readonly trumpCardSuit = this.trumpCard.suit;
 
   private readonly outGameCards: Card[] = [];
