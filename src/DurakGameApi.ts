@@ -230,7 +230,7 @@ export class DurakGame {
 
         }
 
-        if (game.table.attackCards.length !== game.defenceCardsAmount) {
+        if (game.table.attackCards.length !== game.defenceCardsAmount && !game.wasTaken) {
           throw new Error('cannot done');
         }
 
