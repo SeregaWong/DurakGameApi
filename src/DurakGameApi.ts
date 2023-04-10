@@ -353,10 +353,10 @@ export class DurakGame {
 
     if (canAdd < 1) { return; }
 
-    new DealCardsEvent(
+    this.store.handle(new DealCardsEvent(
       this.getPlayerIndex(player),
       canAdd,
-    );
+    ));
   }
 
   private static getCardsDeck() {
