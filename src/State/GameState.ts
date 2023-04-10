@@ -3,16 +3,27 @@ import { Event } from "../Events/Event";
 import { Card, PlayerIndex } from "../type";
 import { gameStateReducer } from "./Reducer";
 
+export namespace GameState {
+
+  export interface Table {
+    attackCards: Card[];
+    defenceCards: Card[];
+  }
+}
+
 /**
  * @description game state view
  */
-export class GameState {
+export class GameState implements DurakGame.IGameState {
+  public readonly trumpCard: Card;
 
   public constructor(
     public readonly deck: Card[],
-  ) {}
+  ) {
+    this.trumpCard = deck[0];
+  }
 
-  public table: DurakGame.Table = { attackCards: [], defenceCards: [] };
+  public table: GameState.Table = { attackCards: [], defenceCards: [] };
   public attackPlayer: PlayerIndex = 0;
   public wasTaken = false;
   public readonly outGameCards: Card[] = [];
@@ -78,7 +89,22 @@ export class GameState {
     this.getPlayerCards(playerIndex).push(...cards);
   }
 
-  private getPlayerCards(playerIndex: PlayerIndex) {
+  public getPersonalState(playerIndex: PlayerIndex): DurakGame.PersonalGameState {
+    const myCards = this.getPlayerCards(playerIndex);
+
+    return {
+      outGameCards: this.outGameCards,
+      table: this.table,
+      trumpCard: this.trumpCard,
+      deckCardsLeftAmount: this.deck.length,
+      wasTaken: this.wasTaken,
+      myCards,
+      enemyCardsAmount: myCards.length,
+      isAttack: playerIndex === this.attackPlayer,
+    };
+  }
+
+  public getPlayerCards(playerIndex: PlayerIndex) {
     if (playerIndex === 0) {
       return this.player1Cards;
     } else {

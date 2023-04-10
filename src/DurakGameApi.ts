@@ -8,16 +8,14 @@ import {
   TakeDoneEvent,
   TakeEvent,
   WinEvent,
+  Event,
 } from './Events';
+import { LocalEventStore } from './LocalEventStore';
+import { GameState } from './State/GameState';
 import { shuffle } from './shuffle';
 import { Card, CardSuit, CardValue, PlayerIndex } from './type';
 
 export namespace DurakGame {
-
-  export interface Table {
-    attackCards: Card[];
-    defenceCards: Card[];
-  }
 
   export namespace Actions {
 
@@ -66,7 +64,7 @@ export namespace DurakGame {
   export type WinHandler = (winner?: DurakPlayerApi) => void;
 
   export interface CommonGameState {
-    table: Table;
+    table: GameState.Table;
     outGameCards: Card[];
     trumpCard: Card;
     deckCardsLeftAmount: number;
@@ -80,68 +78,70 @@ export namespace DurakGame {
     isAttack: boolean;
   }
 
+  export interface IGameState {
+    readonly attackPlayer: PlayerIndex;
+    readonly defencePlayer: PlayerIndex;
+    readonly deck: Card[];
+    readonly table: GameState.Table;
+    readonly trumpCard: Card;
+    readonly allTableCards: Card[];
+    readonly defenceCardsAmount: number;
+    getPlayerCards(playerIndex: PlayerIndex): readonly Card[];
+    readonly wasTaken: boolean;
+    getPersonalState(playerIndex: PlayerIndex): PersonalGameState;
+  }
+
+  export interface IEventStore {
+    handle(event: Event): void;
+    getState(): IGameState;
+  }
+
 }
 
 export class DurakGame {
 
-  private readonly deck = DurakGame.getCardsDeck();
-  public readonly trumpCard = this.deck[0];
-  private readonly trumpCardSuit = this.trumpCard.suit;
-
-  private readonly outGameCards: Card[] = [];
-
-  private attackPlayer!: DurakPlayerApi;
-
-  private table: DurakGame.Table = { attackCards: [], defenceCards: [] };
-
-  private player1Cards: Card[] = [];
-  private player2Cards: Card[] = [];
+  private readonly store: DurakGame.IEventStore = new LocalEventStore(DurakGame.getCardsDeck());
+  private readonly state = this.store.getState();
 
   private step = 0;
-
-  private wasTaken = false;
 
   private get maxAttackCardsAmountNow() {
     return this.step === 1 ? 5 : 6;
   }
 
-  private get defencePlayer() {
-    const { attackPlayer, player1 } = this;
+  private get attackPlayer() {
+    return this.getPlayer(true);
+  }
 
-    if (attackPlayer !== player1) {
-      return player1;
+  private get defencePlayer() {
+    return this.getPlayer(false);
+  }
+
+  private getPlayer(isAttack: boolean) {
+    const index = isAttack ? 0 : 1;
+    if (this.state.attackPlayer === index) {
+      return this.player1;
     } else {
       return this.player2;
     }
-  }
-
-  private get defenceCardsAmount() {
-    return this.table.defenceCards
-      .reduce((amount, card) => !card ? amount : amount + 1, 0);
-  }
-
-  private get allTableCards() {
-    const { table } = this;
-
-    return [
-      table.attackCards,
-      table.defenceCards,
-    ].flat();
   }
 
   private static actionHandlersMap: {
     [P in DurakGame.ActionType]: DurakGame.ActionHandler<P>;
   } = {
       attack(game, player, { card }) {
-        if (player === game.attackPlayer) {
-          const { table: { attackCards }, maxAttackCardsAmountNow } = game;
+        const playerIndex = game.getPlayerIndex(player);
+        const { state } = game;
+
+        if (playerIndex === state.attackPlayer) {
+          const { state: { table: { attackCards } }, maxAttackCardsAmountNow } = game;
 
           if (attackCards.length > maxAttackCardsAmountNow) {
             throw new Error('limit attack');
           }
 
           if (!!attackCards.length) {
-            const isSameValCardOnTable = game.allTableCards
+            const isSameValCardOnTable = state.allTableCards
               .some(({ val }) => card.val === val);
 
             if (!isSameValCardOnTable) {
@@ -152,19 +152,19 @@ export class DurakGame {
           const isDefencePlayerHaveNoCards =
             (
               attackCards.length
-              - game.defenceCardsAmount
-              - game.getPlayerCards(game.defencePlayer).length
+              - state.defenceCardsAmount
+              - state.getPlayerCards(state.defencePlayer).length
             ) === 0;
 
           if (isDefencePlayerHaveNoCards) {
             throw new Error('defence player have no cards');
           }
 
-          // TODO: dispatch event
-          new AttackEvent(game.getPlayerIndex(player), card);
+          game.store.handle(new AttackEvent(playerIndex, card));
         } else {
-          const { table: { attackCards } } = game;
-          if (!attackCards.length || !!game.defenceCardsAmount) {
+          const {state: { table: { attackCards } }} = game;
+
+          if (!attackCards.length || !!state.defenceCardsAmount) {
             throw new Error('cannot transfer back that table');
           }
           if (card.val !== attackCards[0].val) {
@@ -172,27 +172,28 @@ export class DurakGame {
           }
 
           const isAttackPlayerHaveNoCards =
-            attackCards.length >= game.getPlayerCards(game.attackPlayer).length;
+            attackCards.length >= state.getPlayerCards(state.attackPlayer).length;
 
           if (isAttackPlayerHaveNoCards) {
             throw new Error('attack player have no cards');
           }
 
-          // TODO: dispatch event
-          new ReverseAttackEvent(game.getPlayerIndex(player), card);
+          game.store.handle(new ReverseAttackEvent(playerIndex, card));
         }
       },
       defence(game, player, { card, place }) {
-        if (player === game.attackPlayer || game.wasTaken) {
+        const { state } = game;
+
+        if (player === game.attackPlayer || state.wasTaken) {
           throw new Error('cannot defence');
         }
-        const attackCard = game.table.attackCards[place];
+        const attackCard = state.table.attackCards[place];
 
-        if (!attackCard || !!game.table.defenceCards[place]) {
+        if (!attackCard || !!state.table.defenceCards[place]) {
           throw new Error('wrong place');
         }
 
-        const { trumpCardSuit } = game;
+        const trumpCardSuit = state.trumpCard.suit;
 
         if (card.suit !== trumpCardSuit || attackCard.suit === trumpCardSuit) {
 
@@ -206,50 +207,50 @@ export class DurakGame {
 
         }
 
-        // TODO: dispatch event
-        new DefenceEvent(game.getPlayerIndex(player), card, place);
+        game.store.handle(new DefenceEvent(game.getPlayerIndex(player), card, place));
 
         if (
-          game.defenceCardsAmount === game.maxAttackCardsAmountNow
+          state.defenceCardsAmount === game.maxAttackCardsAmountNow
           ||
-          !game.getPlayerCards(game.attackPlayer).length
+          !state.getPlayerCards(state.attackPlayer).length
           ||
-          !game.getPlayerCards(game.defencePlayer).length
+          !state.getPlayerCards(state.defencePlayer).length
         ) {
           DurakGame.actionHandlersMap.done(game, player, { type: 'done' });
         }
       },
       done(game, player) {
+        const { state } = game;
 
         if (player !== game.attackPlayer) {
 
           if (
-            !!game.getPlayerCards(game.attackPlayer).length
+            !!state.getPlayerCards(state.attackPlayer).length
             &&
-            !!game.getPlayerCards(game.defencePlayer).length
+            !!state.getPlayerCards(state.defencePlayer).length
           ) {
             throw new Error('cannot done');
           }
         } else {
 
-          if (!game.table.attackCards.length) {
+          if (!state.table.attackCards.length) {
             throw new Error('cannot done');
           }
 
         }
 
-        if (game.table.attackCards.length !== game.defenceCardsAmount && !game.wasTaken) {
+        if (state.table.attackCards.length !== state.defenceCardsAmount && !state.wasTaken) {
           throw new Error('cannot done');
         }
 
         game.toStep();
       },
       take(game, player) {
-        if (player === game.attackPlayer || game.wasTaken) {
+        if (player === game.attackPlayer || game.state.wasTaken) {
           throw new Error('cannot take');
         }
-        // TODO: dispatch event
-        new TakeEvent();
+
+        game.store.handle(new TakeEvent());
       },
     };
 
@@ -279,67 +280,44 @@ export class DurakGame {
   }
 
   private toStep() {
+    const { state, store } = this;
     this.step++;
 
-    if (this.table.attackCards.length) {
-      if (this.wasTaken) {
-        // TODO: dispatch event
-        new TakeDoneEvent();
+    if (state.table.attackCards.length) {
+      if (state.wasTaken) {
+        store.handle(new TakeDoneEvent());
       } else {
-        // TODO: dispatch event
-        new BeatenOffEvent();
+        store.handle(new BeatenOffEvent());
       }
     }
 
     this.dealCards();
 
-    if (!this.player1Cards.length) {
-      if (!this.player2Cards.length) {
+    if (!state.getPlayerCards(0).length) {
+      if (!state.getPlayerCards(1).length) {
         this.onWin();
-        // TODO: dispatch event
-        new WinEvent();
+        store.handle(new WinEvent());
       } else {
         this.onWin(this.player1);
-        // TODO: dispatch event
-        new WinEvent(0);
+        store.handle(new WinEvent(0));
       }
-    } else if (!this.player2Cards.length) {
+    } else if (!state.getPlayerCards(1).length) {
       this.onWin(this.player2);
-      // TODO: dispatch event
-      new WinEvent(1);
+      store.handle(new WinEvent(1));
     }
   }
 
   private onUpdate(action?: DurakGame.Action) {
-    const commonState: DurakGame.CommonGameState = {
-      outGameCards: this.outGameCards,
-      table: this.table,
-      trumpCard: this.trumpCard,
-      deckCardsLeftAmount: this.deck.length,
-      wasTaken: this.wasTaken,
+    const { state } = this;
+
+    this.player1.onUpdate({
+      ...(state.getPersonalState(0)),
       action,
-    };
-    const {
-      player1,
-      player2,
-      player1Cards,
-      player2Cards,
-    } = this;
-
-    const is1stAttack = player1 === this.attackPlayer;
-
-    player1.onUpdate({
-      ...commonState,
-      myCards: player1Cards,
-      enemyCardsAmount: player2Cards.length,
-      isAttack: is1stAttack,
     });
 
-    player2.onUpdate({
-      ...commonState,
-      myCards: player2Cards,
-      enemyCardsAmount: player1Cards.length,
-      isAttack: !is1stAttack,
+    this.player2.onUpdate({
+      ...(state.getPersonalState(1)),
+      action,
     });
   }
 
@@ -350,22 +328,15 @@ export class DurakGame {
     return 1;
   }
 
-  private getPlayerCards(player: DurakPlayerApi) {
-    if (player === this.player1) {
-      return this.player1Cards;
-    } else {
-      return this.player2Cards;
-    }
-  }
-
   private dealCards() {
     this.dealCardsToPlayer(this.attackPlayer);
     this.dealCardsToPlayer(this.defencePlayer);
   }
 
   private dealCardsToPlayer(player: DurakPlayerApi) {
-    const cards = this.getPlayerCards(player);
-    const { deck } = this;
+    const playerIndex = this.getPlayerIndex(player);
+    const cards = this.state.getPlayerCards(playerIndex);
+    const { deck } = this.state;
 
     const needAdd = 6 - cards.length;
     const canAdd = Math.min(needAdd, deck.length);
