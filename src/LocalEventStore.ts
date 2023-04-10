@@ -2,6 +2,7 @@ import { GameState } from "./State/GameState";
 import { Card } from "./type";
 import { Event } from "./Events";
 import { DurakGame } from "./DurakGameApi";
+import { InitDeckEvent } from "./Events/InitDeckEvent";
 
 export namespace LocalEventStore {
 
@@ -22,6 +23,8 @@ export class LocalEventStore implements DurakGame.IEventStore {
     ...events: Event[]
   ) {
     this.state = new GameState(deck);
+
+    this.events.push(new InitDeckEvent(deck));
 
     events.forEach(event => {
       this.handle(event);
