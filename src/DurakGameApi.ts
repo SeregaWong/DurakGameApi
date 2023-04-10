@@ -129,130 +129,140 @@ export class DurakGame {
   private static actionHandlersMap: {
     [P in DurakGame.ActionType]: DurakGame.ActionHandler<P>;
   } = {
-      attack(game, player, { card }) {
-        const playerIndex = game.getPlayerIndex(player);
-        const { state } = game;
-
-        if (playerIndex === state.attackPlayer) {
-          const { state: { table: { attackCards } }, maxAttackCardsAmountNow } = game;
-
-          if (attackCards.length > maxAttackCardsAmountNow) {
-            throw new Error('limit attack');
-          }
-
-          if (!!attackCards.length) {
-            const isSameValCardOnTable = state.allTableCards
-              .some(({ val }) => card.val === val);
-
-            if (!isSameValCardOnTable) {
-              throw new Error('can only put card same by val');
-            }
-          }
-
-          const isDefencePlayerHaveNoCards =
-            (
-              attackCards.length
-              - state.defenceCardsAmount
-              - state.getPlayerCards(state.defencePlayer).length
-            ) === 0;
-
-          if (isDefencePlayerHaveNoCards) {
-            throw new Error('defence player have no cards');
-          }
-
-          game.store.handle(new AttackEvent(playerIndex, card));
-        } else {
-          const {state: { table: { attackCards } }} = game;
-
-          if (!attackCards.length || !!state.defenceCardsAmount) {
-            throw new Error('cannot transfer back that table');
-          }
-          if (card.val !== attackCards[0].val) {
-            throw new Error('card must have same val');
-          }
-
-          const isAttackPlayerHaveNoCards =
-            attackCards.length >= state.getPlayerCards(state.attackPlayer).length;
-
-          if (isAttackPlayerHaveNoCards) {
-            throw new Error('attack player have no cards');
-          }
-
-          game.store.handle(new ReverseAttackEvent(playerIndex, card));
-        }
-      },
-      defence(game, player, { card, place }) {
-        const { state } = game;
-
-        if (player === game.attackPlayer || state.wasTaken) {
-          throw new Error('cannot defence');
-        }
-        const attackCard = state.table.attackCards[place];
-
-        if (!attackCard || !!state.table.defenceCards[place]) {
-          throw new Error('wrong place');
-        }
-
-        const trumpCardSuit = state.trumpCard.suit;
-
-        if (card.suit !== trumpCardSuit || attackCard.suit === trumpCardSuit) {
-
-          if (card.suit !== attackCard.suit) {
-            throw new Error('cannot defence that card: wrong suit');
-          }
-
-          if (card.val < attackCard.val) {
-            throw new Error('cannot defence that card: wrong val');
-          }
-
-        }
-
-        game.store.handle(new DefenceEvent(game.getPlayerIndex(player), card, place));
-
-        if (
-          state.defenceCardsAmount === game.maxAttackCardsAmountNow
-          ||
-          !state.getPlayerCards(state.attackPlayer).length
-          ||
-          !state.getPlayerCards(state.defencePlayer).length
-        ) {
-          DurakGame.actionHandlersMap.done(game, player, { type: 'done' });
-        }
-      },
-      done(game, player) {
-        const { state } = game;
-
-        if (player !== game.attackPlayer) {
-
-          if (
-            !!state.getPlayerCards(state.attackPlayer).length
-            &&
-            !!state.getPlayerCards(state.defencePlayer).length
-          ) {
-            throw new Error('cannot done');
-          }
-        } else {
-
-          if (!state.table.attackCards.length) {
-            throw new Error('cannot done');
-          }
-
-        }
-
-        if (state.table.attackCards.length !== state.defenceCardsAmount && !state.wasTaken) {
-          throw new Error('cannot done');
-        }
-
-        game.toStep();
-      },
-      take(game, player) {
-        if (player === game.attackPlayer || game.state.wasTaken) {
-          throw new Error('cannot take');
-        }
-
-        game.store.handle(new TakeEvent());
-      },
+      attack: (game, player, action) => game.attack(player, action),
+      defence: (game, player, action) => game.defence(player, action),
+      done: (game, player) => game.done(player),
+      take: (game, player) => game.take(player),
     };
+
+  private attack(player: DurakPlayerApi, action: DurakGame.Actions.Attack): void {
+    const playerIndex = this.getPlayerIndex(player);
+    const { state } = this;
+    const { card } = action;
+
+    if (playerIndex === state.attackPlayer) {
+      const { state: { table: { attackCards } }, maxAttackCardsAmountNow } = this;
+
+      if (attackCards.length > maxAttackCardsAmountNow) {
+        throw new Error('limit attack');
+      }
+
+      if (!!attackCards.length) {
+        const isSameValCardOnTable = state.allTableCards
+          .some(({ val }) => card.val === val);
+
+        if (!isSameValCardOnTable) {
+          throw new Error('can only put card same by val');
+        }
+      }
+
+      const isDefencePlayerHaveNoCards =
+        (
+          attackCards.length
+          - state.defenceCardsAmount
+          - state.getPlayerCards(state.defencePlayer).length
+        ) === 0;
+
+      if (isDefencePlayerHaveNoCards) {
+        throw new Error('defence player have no cards');
+      }
+
+      this.store.handle(new AttackEvent(playerIndex, card));
+    } else {
+      const {state: { table: { attackCards } }} = this;
+
+      if (!attackCards.length || !!state.defenceCardsAmount) {
+        throw new Error('cannot transfer back that table');
+      }
+      if (card.val !== attackCards[0].val) {
+        throw new Error('card must have same val');
+      }
+
+      const isAttackPlayerHaveNoCards =
+        attackCards.length >= state.getPlayerCards(state.attackPlayer).length;
+
+      if (isAttackPlayerHaveNoCards) {
+        throw new Error('attack player have no cards');
+      }
+
+      this.store.handle(new ReverseAttackEvent(playerIndex, card));
+    }
+  }
+
+  private defence(player: DurakPlayerApi, action: DurakGame.Actions.Defence): void {
+    const { state } = this;
+    const { card, place } = action;
+
+    if (player === this.attackPlayer || state.wasTaken) {
+      throw new Error('cannot defence');
+    }
+    const attackCard = state.table.attackCards[place];
+
+    if (!attackCard || !!state.table.defenceCards[place]) {
+      throw new Error('wrong place');
+    }
+
+    const trumpCardSuit = state.trumpCard.suit;
+
+    if (card.suit !== trumpCardSuit || attackCard.suit === trumpCardSuit) {
+
+      if (card.suit !== attackCard.suit) {
+        throw new Error('cannot defence that card: wrong suit');
+      }
+
+      if (card.val < attackCard.val) {
+        throw new Error('cannot defence that card: wrong val');
+      }
+
+    }
+
+    this.store.handle(new DefenceEvent(this.getPlayerIndex(player), card, place));
+
+    if (
+      state.defenceCardsAmount === this.maxAttackCardsAmountNow
+      ||
+      !state.getPlayerCards(state.attackPlayer).length
+      ||
+      !state.getPlayerCards(state.defencePlayer).length
+    ) {
+      this.done(player);
+    }
+  }
+
+  private done(player: DurakPlayerApi): void {
+    const { state } = this;
+
+    if (player !== this.attackPlayer) {
+
+      if (
+        !!state.getPlayerCards(state.attackPlayer).length
+        &&
+        !!state.getPlayerCards(state.defencePlayer).length
+      ) {
+        throw new Error('cannot done');
+      }
+    } else {
+
+      if (!state.table.attackCards.length) {
+        throw new Error('cannot done');
+      }
+
+    }
+
+    if (state.table.attackCards.length !== state.defenceCardsAmount && !state.wasTaken) {
+      throw new Error('cannot done');
+    }
+
+    this.toStep();
+  }
+
+  private take(player: DurakPlayerApi): void {
+    if (player === this.attackPlayer || this.state.wasTaken) {
+      throw new Error('cannot take');
+    }
+
+    this.store.handle(new TakeEvent());
+  }
 
   constructor(
     private readonly player1: DurakPlayerApi,
