@@ -1,3 +1,3 @@
 
-export class Event {
+export abstract class Event {
 }
