@@ -208,7 +208,7 @@ export class DurakGame {
           ||
           !game.getPlayerCards(game.defencePlayer).length
         ) {
-          this.done(game, player, { type: 'done' });
+          DurakGame.actionHandlersMap.done(game, player, { type: 'done' });
         }
       },
       done(game, player) {
