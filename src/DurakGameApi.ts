@@ -1,6 +1,16 @@
 import { DurakPlayerApi } from './DurakPlayerApi';
+import {
+  AttackEvent,
+  BeatenOffEvent,
+  DealCardsEvent,
+  DefenceEvent,
+  ReverseAttackEvent,
+  TakeDoneEvent,
+  TakeEvent,
+  WinEvent,
+} from './Events';
 import { shuffle } from './shuffle';
-import { Card, CardSuit, CardValue } from './type';
+import { Card, CardSuit, CardValue, PlayerIndex } from './type';
 
 export namespace DurakGame {
 
@@ -150,8 +160,8 @@ export class DurakGame {
             throw new Error('defence player have no cards');
           }
 
-          attackCards.push(card);
-          game.takeAwayCard(player, card);
+          // TODO: dispatch event
+          new AttackEvent(game.getPlayerIndex(player), card);
         } else {
           const { table: { attackCards } } = game;
           if (!attackCards.length || !!game.defenceCardsAmount) {
@@ -168,9 +178,8 @@ export class DurakGame {
             throw new Error('attack player have no cards');
           }
 
-          attackCards.push(card);
-          game.takeAwayCard(player, card);
-          game.reverseAttackPlayer();
+          // TODO: dispatch event
+          new ReverseAttackEvent(game.getPlayerIndex(player), card);
         }
       },
       defence(game, player, { card, place }) {
@@ -197,9 +206,8 @@ export class DurakGame {
 
         }
 
-        game.takeAwayCard(player, card);
-        game.table.defenceCards[place] = card;
-
+        // TODO: dispatch event
+        new DefenceEvent(game.getPlayerIndex(player), card, place);
 
         if (
           game.defenceCardsAmount === game.maxAttackCardsAmountNow
@@ -237,10 +245,11 @@ export class DurakGame {
         game.toStep();
       },
       take(game, player) {
-        if (player === game.attackPlayer) {
+        if (player === game.attackPlayer || game.wasTaken) {
           throw new Error('cannot take');
         }
-        game.wasTaken = true;
+        // TODO: dispatch event
+        new TakeEvent();
       },
     };
 
@@ -269,35 +278,35 @@ export class DurakGame {
     this.onUpdate(action);
   }
 
-  private clearTable() {
-    const { table } = this;
-
-    table.attackCards = [];
-    table.defenceCards = [];
-  }
-
   private toStep() {
     this.step++;
 
-    if (this.wasTaken) {
-      this.wasTaken = false;
-      this.addPlayerCards(this.defencePlayer, this.allTableCards);
-    } else {
-      this.reverseAttackPlayer();
-      this.outGameCards.push(...this.allTableCards);
+    if (this.table.attackCards.length) {
+      if (this.wasTaken) {
+        // TODO: dispatch event
+        new TakeDoneEvent();
+      } else {
+        // TODO: dispatch event
+        new BeatenOffEvent();
+      }
     }
 
-    this.clearTable();
-    this.dealСards();
+    this.dealCards();
 
     if (!this.player1Cards.length) {
       if (!this.player2Cards.length) {
         this.onWin();
+        // TODO: dispatch event
+        new WinEvent();
       } else {
         this.onWin(this.player1);
+        // TODO: dispatch event
+        new WinEvent(0);
       }
     } else if (!this.player2Cards.length) {
       this.onWin(this.player2);
+      // TODO: dispatch event
+      new WinEvent(1);
     }
   }
 
@@ -334,8 +343,11 @@ export class DurakGame {
     });
   }
 
-  private reverseAttackPlayer() {
-    this.attackPlayer = this.defencePlayer;
+  private getPlayerIndex(player: DurakPlayerApi): PlayerIndex {
+    if (player === this.player1) {
+      return 0;
+    } 
+    return 1;
   }
 
   private getPlayerCards(player: DurakPlayerApi) {
@@ -346,24 +358,12 @@ export class DurakGame {
     }
   }
 
-  private setPlayerCards(player: DurakPlayerApi, cards: Card[]) {
-    if (player === this.player1) {
-      this.player1Cards = cards;
-    } else {
-      this.player2Cards = cards;
-    }
+  private dealCards() {
+    this.dealCardsToPlayer(this.attackPlayer);
+    this.dealCardsToPlayer(this.defencePlayer);
   }
 
-  private addPlayerCards(player: DurakPlayerApi, cards: Card[]) {
-    this.getPlayerCards(player).push(...cards);
-  }
-
-  private dealСards() {
-    this.dealСardsToPlayer(this.attackPlayer);
-    this.dealСardsToPlayer(this.defencePlayer);
-  }
-
-  private dealСardsToPlayer(player: DurakPlayerApi) {
+  private dealCardsToPlayer(player: DurakPlayerApi) {
     const cards = this.getPlayerCards(player);
     const { deck } = this;
 
@@ -372,20 +372,10 @@ export class DurakGame {
 
     if (canAdd < 1) { return; }
 
-    cards.push(...deck.splice(deck.length - canAdd));
-  }
-
-  private takeAwayCard(player: DurakPlayerApi, card: Card) {
-    const playerCards = this.getPlayerCards(player);
-
-    const newCards = playerCards
-      .filter(({ suit, val }) => !(card.suit === suit && card.val === val));
-
-    if (newCards.length !== playerCards.length - 1) {
-      throw new Error('have no card');
-    }
-
-    this.setPlayerCards(player, newCards);
+    new DealCardsEvent(
+      this.getPlayerIndex(player),
+      canAdd,
+    );
   }
 
   private static getCardsDeck() {
