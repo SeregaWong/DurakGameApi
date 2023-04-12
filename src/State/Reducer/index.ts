@@ -1,6 +1,16 @@
 import { GameState } from "../GameState";
 import { IStateReducer } from "./IStateReducer";
-import { AttackEvent, BeatenOffEvent, DealCardsEvent, DefenceEvent, Event, ReverseAttackEvent, TakeDoneEvent, TakeEvent } from "../../Events";
+import { 
+  AttackEvent,
+  BeatenOffEvent,
+  DealCardsEvent,
+  DefenceEvent,
+  Event,
+  ReverseAttackEvent,
+  TakeDoneEvent,
+  TakeEvent,
+  InitDeckEvent,
+ } from "../../Events";
 import { EventReducer } from "./EventReducer";
 
 const attackReducer = new EventReducer(AttackEvent, (state, event) => {
@@ -32,6 +42,10 @@ const defenceReducer = new EventReducer(DefenceEvent, (state, event) => {
   state.table.defenceCards[event.place] = card;
 });
 
+const initDeckReducer = new EventReducer(InitDeckEvent, (state, event) => {
+  state.deck = event.deck;
+});
+
 const reversAttackReducer = new EventReducer(ReverseAttackEvent, (state, event) => {
   const {card} = event;
 
@@ -57,6 +71,7 @@ class GameStateReducer implements IStateReducer {
     beatenOffReducer,
     dealCardsReducer,
     defenceReducer,
+    initDeckReducer,
     reversAttackReducer,
     takeDoneReducer,
     takeReducer,

@@ -1,30 +1,23 @@
 import { GameState } from "./State/GameState";
-import { Card } from "./type";
 import { Event } from "./Events";
-import { DurakGame } from "./DurakGameApi";
-import { InitDeckEvent } from "./Events/InitDeckEvent";
+import { DurakGameApi } from "./DurakGameApi";
 
 export namespace LocalEventStore {
 
-  export interface IGameState {
+  export interface IState {
     handle(event: Event): void;
     handle(events: Event[]): void;
   }
 }
 
-export class LocalEventStore implements DurakGame.IEventStore {
+export class LocalEventStore implements DurakGameApi.IEventStore {
 
-  private readonly state: LocalEventStore.IGameState & DurakGame.IGameState;
+  private readonly state: LocalEventStore.IState & DurakGameApi.IState;
 
   private readonly events: Event[] = [];
 
-  constructor(
-    readonly deck: Card[],
-    ...events: Event[]
-  ) {
-    this.state = new GameState(deck);
-
-    this.events.push(new InitDeckEvent(deck));
+  constructor(...events: Event[]) {
+    this.state = new GameState();
 
     events.forEach(event => {
       this.handle(event);

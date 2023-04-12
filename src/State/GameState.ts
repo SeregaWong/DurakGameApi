@@ -1,4 +1,4 @@
-import { DurakGame } from "../DurakGameApi";
+import { DurakGameApi } from "../DurakGameApi";
 import { Event } from "../Events/Event";
 import { Card, PlayerIndex } from "../type";
 import { gameStateReducer } from "./Reducer";
@@ -14,13 +14,38 @@ export namespace GameState {
 /**
  * @description game state view
  */
-export class GameState implements DurakGame.IGameState {
-  public readonly trumpCard: Card;
+export class GameState implements DurakGameApi.IState {
+  private _trumpCard?: Card;
 
-  public constructor(
-    public readonly deck: Card[],
-  ) {
-    this.trumpCard = deck[0];
+  public get trumpCard(): Card {
+    const { _trumpCard } = this;
+
+    if (!_trumpCard) {
+      throw new Error('have no trumpCard');
+    }
+
+    return _trumpCard;
+  }
+
+  private _deck?: Card[];
+
+  public get deck(): Card[] {
+    const { _deck } = this;
+
+    if (!_deck) {
+      throw new Error('have no deck');
+    }
+
+    return _deck;
+  }
+
+  public set deck(v: Card[]) {
+    this._deck = v;
+    this._trumpCard = v[0];
+  }
+
+  public get isStarted() {
+    return !!this._deck;
   }
 
   public table: GameState.Table = { attackCards: [], defenceCards: [] };
@@ -89,7 +114,7 @@ export class GameState implements DurakGame.IGameState {
     this.getPlayerCards(playerIndex).push(...cards);
   }
 
-  public getPersonalState(playerIndex: PlayerIndex): DurakGame.PersonalGameState {
+  public getPersonalState(playerIndex: PlayerIndex): DurakGameApi.IState.Personal {
     const myCards = this.getPlayerCards(playerIndex);
 
     return {
