@@ -1,6 +1,6 @@
-import { GameState } from "./State/GameState";
-import { Event } from "./Events";
-import { DurakGameApi } from "./DurakGameApi";
+import { GameState } from "../State/GameState";
+import { Event } from "../Events";
+import { DurakGameApi } from "../DurakGameApi";
 
 export namespace LocalEventStore {
 

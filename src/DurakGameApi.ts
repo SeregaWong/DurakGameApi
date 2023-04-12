@@ -2,7 +2,7 @@ import { DurakPlayerApi } from './DurakPlayerApi';
 import {
   Event, WinEvent,
 } from './Events';
-import { LocalEventStore } from './LocalEventStore';
+import { LocalEventStore } from './EventStore';
 import { Card, PlayerIndex } from './type';
 import { DurakGame } from './DurakGame';
 import { GameState } from './State/GameState';
