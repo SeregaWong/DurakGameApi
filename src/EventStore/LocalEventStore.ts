@@ -4,7 +4,7 @@ import { DurakGameApi } from "../DurakGameApi";
 
 export namespace LocalEventStore {
 
-  export interface IState {
+  export interface IState extends DurakGameApi.IState {
     handle(event: Event): void;
     handle(events: Event[]): void;
   }
@@ -12,7 +12,7 @@ export namespace LocalEventStore {
 
 export class LocalEventStore implements DurakGameApi.IEventStore {
 
-  private readonly state: LocalEventStore.IState & DurakGameApi.IState;
+  private readonly state: LocalEventStore.IState;
 
   private readonly events: Event[] = [];
 

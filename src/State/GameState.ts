@@ -1,5 +1,6 @@
 import { DurakGameApi } from "../DurakGameApi";
-import { Event } from "../Events/Event";
+import { AdvancedLocalEventStore } from "../EventStore";
+import { Event } from "../Events";
 import { Card, PlayerIndex } from "../type";
 import { gameStateReducer } from "./Reducer";
 
@@ -9,12 +10,22 @@ export namespace GameState {
     attackCards: Card[];
     defenceCards: Card[];
   }
+
+  export interface Snapshot {
+    _deck?: Card[];
+    table: GameState.Table;
+    attackPlayer: PlayerIndex;
+    wasTaken: boolean;
+    outGameCards: Card[];
+    player1Cards: Card[];
+    player2Cards: Card[];
+  }
 }
 
 /**
  * @description game state view
  */
-export class GameState implements DurakGameApi.IState {
+export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.IState<GameState.Snapshot> {
   private _trumpCard?: Card;
 
   public get trumpCard(): Card {
@@ -143,5 +154,31 @@ export class GameState implements DurakGameApi.IState {
     } else {
       this.player2Cards = cards;
     }
+  }
+
+  toSnapshot() {
+    return {
+      _deck: this._deck,
+      table: this.table,
+      attackPlayer: this.attackPlayer,
+      wasTaken: this.wasTaken,
+      outGameCards: this.outGameCards,
+      player1Cards: this.player1Cards,
+      player2Cards: this.player2Cards,
+    };
+  }
+
+  static fromSnapshot(snapshot: GameState.Snapshot) {
+    const state = new GameState();
+
+    state._deck = snapshot._deck;
+    state.table = snapshot.table;
+    state.attackPlayer = snapshot.attackPlayer;
+    state.wasTaken = snapshot.wasTaken;
+    state.outGameCards.push(...snapshot.outGameCards);
+    state.player1Cards = snapshot.player1Cards;
+    state.player2Cards = snapshot.player2Cards;
+
+    return state;  
   }
 }
