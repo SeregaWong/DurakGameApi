@@ -1,6 +1,7 @@
 import { GameState } from "../State/GameState";
 import { Event } from "../Events";
 import { DurakGameApi } from "../DurakGameApi";
+import { AdvancedDurakGameApi } from "../AdvancedDurakGameApi";
 
 export namespace AdvancedLocalEventStore {
 
@@ -17,7 +18,9 @@ export namespace AdvancedLocalEventStore {
   }
 }
 
-export class AdvancedLocalEventStore implements DurakGameApi.IEventStore {
+export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore {
+
+  private static readonly MAX_SNAPSHOTS_AMOUNT = 3;
 
   private static readonly State: AdvancedLocalEventStore.IStateClass<GameState.Snapshot> = GameState;
 
@@ -30,7 +33,7 @@ export class AdvancedLocalEventStore implements DurakGameApi.IEventStore {
 
   private state: AdvancedLocalEventStore.IState<GameState.Snapshot>;
 
-  private currentIndex: number = 0;
+  public currentIndex: number = 0;
 
   constructor(...events: Event[]) {
     this.state = this.createState();
@@ -86,6 +89,8 @@ export class AdvancedLocalEventStore implements DurakGameApi.IEventStore {
       .forEach((event) => this.state.handle(event));
 
     this.currentIndex = index;
+
+    this.snapshot();
   }
 
   private getNearestSnapshot(index: number) {
@@ -113,7 +118,7 @@ export class AdvancedLocalEventStore implements DurakGameApi.IEventStore {
       snapshot: this.state.toSnapshot(),
     });
 
-    if (snapshots.length > 3) {
+    if (snapshots.length > AdvancedLocalEventStore.MAX_SNAPSHOTS_AMOUNT) {
       snapshots.shift();
     }
   }

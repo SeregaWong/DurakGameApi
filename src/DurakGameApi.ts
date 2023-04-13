@@ -48,7 +48,7 @@ export namespace DurakGameApi {
 
 export class DurakGameApi {
 
-  private readonly store: DurakGameApi.IEventStore = new LocalEventStore();
+  protected readonly store: DurakGameApi.IEventStore = new LocalEventStore();
 
   private readonly gameLogic: DurakGameApi.IGameLogic = new DurakGame({
     getState: () => this.getState(),
@@ -100,7 +100,7 @@ export class DurakGameApi {
     this.onUpdate(action);
   }
 
-  private onUpdate(action?: DurakGame.Action) {
+  protected onUpdate(action?: DurakGame.Action) {
     const state = this.getState();
 
     this.player1.onUpdate({
