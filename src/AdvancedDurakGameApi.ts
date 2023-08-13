@@ -14,6 +14,8 @@ export namespace AdvancedDurakGameApi {
 export class AdvancedDurakGameApi extends DurakGameApi {
   protected readonly store!: AdvancedDurakGameApi.IEventStore;
 
+  private readonly INIT_EVENTS_AMOUNT = 3;  // [ init cards, deal cards, deal cards ]
+
   protected createStore(): DurakGameApi.IEventStore {
     return new AdvancedLocalEventStore();
   }
@@ -31,8 +33,7 @@ export class AdvancedDurakGameApi extends DurakGameApi {
   public toPreviousState() {
     const { currentIndex } = this.store;
 
-    if (currentIndex < 2) {
-      // to init event
+    if (currentIndex < this.INIT_EVENTS_AMOUNT) {
       return;
     }
 
