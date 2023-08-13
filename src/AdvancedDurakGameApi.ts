@@ -12,7 +12,11 @@ export namespace AdvancedDurakGameApi {
 }
 
 export class AdvancedDurakGameApi extends DurakGameApi {
-  protected readonly store: AdvancedDurakGameApi.IEventStore = new AdvancedLocalEventStore();
+  protected readonly store!: AdvancedDurakGameApi.IEventStore;
+
+  protected createStore(): DurakGameApi.IEventStore {
+    return new AdvancedLocalEventStore();
+  }
 
   private actionIndexes: number[] = [];
 
