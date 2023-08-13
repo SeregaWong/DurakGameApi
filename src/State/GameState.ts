@@ -12,7 +12,7 @@ export namespace GameState {
   }
 
   export interface Snapshot {
-    _deck?: Card[];
+    deck: Card[];
     table: GameState.Table;
     attackPlayer: PlayerIndex;
     wasTaken: boolean;
@@ -158,7 +158,7 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
 
   toSnapshot() {
     return {
-      _deck: this._deck,
+      deck: this.deck,
       table: this.table,
       attackPlayer: this.attackPlayer,
       wasTaken: this.wasTaken,
@@ -171,7 +171,7 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
   static fromSnapshot(snapshot: GameState.Snapshot) {
     const state = new GameState();
 
-    state._deck = snapshot._deck;
+    state.deck = snapshot.deck;
     state.table = snapshot.table;
     state.attackPlayer = snapshot.attackPlayer;
     state.wasTaken = snapshot.wasTaken;
