@@ -13,6 +13,7 @@ export namespace GameState {
 
   export interface Snapshot {
     deck: Card[];
+    trumpCard: Card;
     table: GameState.Table;
     attackPlayer: PlayerIndex;
     wasTaken: boolean;
@@ -50,7 +51,11 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
     return _deck;
   }
 
-  public set deck(v: Card[]) {
+  public setNewDeck(v: Card[]) {
+    if (v.length != 24) {
+      throw new Error('deck is invalid');
+    }
+
     this._deck = v;
     this._trumpCard = v[0];
   }
@@ -159,6 +164,7 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
   toSnapshot() {
     return {
       deck: this.deck,
+      trumpCard: this.trumpCard,
       table: this.table,
       attackPlayer: this.attackPlayer,
       wasTaken: this.wasTaken,
@@ -171,7 +177,8 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
   static fromSnapshot(snapshot: GameState.Snapshot) {
     const state = new GameState();
 
-    state.deck = snapshot.deck;
+    state._deck = snapshot.deck;
+    state._trumpCard = snapshot.trumpCard;
     state.table = snapshot.table;
     state.attackPlayer = snapshot.attackPlayer;
     state.wasTaken = snapshot.wasTaken;
@@ -179,6 +186,6 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
     state.player1Cards = snapshot.player1Cards;
     state.player2Cards = snapshot.player2Cards;
 
-    return state;  
+    return state;
   }
 }

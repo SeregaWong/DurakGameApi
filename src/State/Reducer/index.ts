@@ -43,7 +43,7 @@ const defenceReducer = new EventReducer(DefenceEvent, (state, event) => {
 });
 
 const initDeckReducer = new EventReducer(InitDeckEvent, (state, event) => {
-  state.deck = event.deck;
+  state.setNewDeck(event.deck);
 });
 
 const reversAttackReducer = new EventReducer(ReverseAttackEvent, (state, event) => {
