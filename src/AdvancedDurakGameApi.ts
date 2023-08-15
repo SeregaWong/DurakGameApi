@@ -16,6 +16,11 @@ export class AdvancedDurakGameApi extends DurakGameApi {
 
   private readonly INIT_EVENTS_AMOUNT = 3;  // [ init cards, deal cards, deal cards ]
 
+  constructor(...args: ConstructorParameters<typeof DurakGameApi>) {
+    super(...args);
+    this.store.snapshot();
+  }
+
   protected createStore(): DurakGameApi.IEventStore {
     return new AdvancedLocalEventStore();
   }
