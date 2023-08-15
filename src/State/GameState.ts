@@ -162,10 +162,14 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
   }
 
   toSnapshot() {
+    const { table } = this;
     return {
-      deck: this.deck,
+      deck: [...this.deck],
       trumpCard: this.trumpCard,
-      table: this.table,
+      table: {
+        attackCards: [...table.attackCards],
+        defenceCards: [...table.defenceCards],
+      },
       attackPlayer: this.attackPlayer,
       wasTaken: this.wasTaken,
       outGameCards: this.outGameCards,
