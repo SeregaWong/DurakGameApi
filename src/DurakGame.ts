@@ -239,7 +239,7 @@ export class DurakGame {
       throw new Error('already started');
     }
 
-    durakGameApi.emit(new InitDeckEvent(DurakGame.getCardsDeck()));
+    durakGameApi.emit(new InitDeckEvent(this.getCardsDeck()));
 
     this.toStep();
   }
@@ -300,7 +300,7 @@ export class DurakGame {
     ));
   }
 
-  private static getCardsDeck() {
+  protected getCardsDeck() {
     const deck: Card[] = [];
 
     for (let suit: CardSuit = 0; suit < 4; suit++) {

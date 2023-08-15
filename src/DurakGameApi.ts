@@ -50,10 +50,22 @@ export class DurakGameApi {
 
   protected readonly store: DurakGameApi.IEventStore = this.createStore();
 
-  private readonly gameLogic: DurakGameApi.IGameLogic = new DurakGame({
-    getState: () => this.getState(),
-    emit: (event) => this.emit(event),
-  });
+  protected createStore(): DurakGameApi.IEventStore {
+    return new LocalEventStore();
+  }
+
+  private readonly gameLogic: DurakGameApi.IGameLogic = this.createGameLogic();
+
+  protected createGameLogic(): DurakGameApi.IGameLogic {
+    return new DurakGame(this.getInterfaceForGameLogic());
+  }
+
+  protected getInterfaceForGameLogic() {
+    return {
+      getState: () => this.getState(),
+      emit: (event: Event) => this.emit(event),
+    };
+  }
 
   constructor(
     private readonly player1: DurakPlayerApi,
@@ -65,10 +77,6 @@ export class DurakGameApi {
     player2.setGame(this);
 
     this.start();
-  }
-
-  protected createStore(): DurakGameApi.IEventStore {
-    return new LocalEventStore();
   }
 
   private start() {

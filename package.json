@@ -9,6 +9,7 @@
     "clear": "rimraf dist",
     "build": "(npm run clear || 0) && tsc",
     "test:AdvancedLocalEventStore": "npm run build && node dist/EventStore/AdvancedLocalEventStore.test",
+    "test:AdvancedDurakGameApi": "npm run build && node dist/AdvancedDurakGameApi.test",
     "package-publish": "npm run build && npm run lint && npm publish"
   },
   "repository": {
