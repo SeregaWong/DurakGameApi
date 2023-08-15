@@ -21,7 +21,7 @@ export class AdvancedDurakGameApi extends DurakGameApi {
     this.store.snapshot();
   }
 
-  protected createStore(): DurakGameApi.IEventStore {
+  protected createStore(): AdvancedDurakGameApi.IEventStore {
     return new AdvancedLocalEventStore();
   }
 
@@ -30,7 +30,7 @@ export class AdvancedDurakGameApi extends DurakGameApi {
   public update(player: DurakPlayerApi, action: DurakGame.Action) {
     super.update(player, action);
     const { currentIndex } = this.store;
-    (this.actionIndexes = this.actionIndexes.filter((index) => index > currentIndex))
+    (this.actionIndexes = this.actionIndexes.filter((index) => index < currentIndex))
       .push(currentIndex);
     this.store.snapshot();
   }

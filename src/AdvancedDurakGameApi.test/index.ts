@@ -20,3 +20,6 @@ player1.update({
 
 game.toPreviousState();
 game.toPreviousState();
+
+game.toNextState();
+game.toNextState();
