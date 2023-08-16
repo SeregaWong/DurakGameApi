@@ -88,8 +88,6 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
     this.state.handle(this.events.slice(startHandle, index + 1));
 
     this.currentIndex = index;
-
-    this.snapshot();
   }
 
   private getNearestSnapshot(index: number) {
@@ -106,9 +104,15 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
   }
 
   snapshot() {
-    const { currentIndex, snapshots } = this;
+    const { currentIndex } = this;
+    let snapshotExist = false;
 
-    if (snapshots.some(snapshot => snapshot.index === currentIndex)) {
+    const snapshots = this.snapshots = this.snapshots.filter(snapshot => {
+      snapshotExist = snapshotExist || snapshot.index === currentIndex;
+      return snapshot.index <= currentIndex;
+    });
+
+    if (snapshotExist) {
       return;
     }
 
