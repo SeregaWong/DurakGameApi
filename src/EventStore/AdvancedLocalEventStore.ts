@@ -105,16 +105,10 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
 
   snapshot() {
     const { currentIndex } = this;
-    let snapshotExist = false;
 
     const snapshots = this.snapshots = this.snapshots.filter(snapshot => {
-      snapshotExist = snapshotExist || snapshot.index === currentIndex;
-      return snapshot.index <= currentIndex;
+      return snapshot.index < currentIndex;
     });
-
-    if (snapshotExist) {
-      return;
-    }
 
     snapshots.push({
       index: currentIndex,

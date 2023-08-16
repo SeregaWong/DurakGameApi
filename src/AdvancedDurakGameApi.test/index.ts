@@ -22,4 +22,13 @@ game.toPreviousState();
 game.toPreviousState();
 
 game.toNextState();
+
+player2.update({
+  type: 'defence',
+  card: {val: CardValue._9, suit: CardSuit.spades},
+  place: 0,
+});
+
+game.toPreviousState();
 game.toNextState();
+
