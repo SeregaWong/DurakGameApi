@@ -173,22 +173,26 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
       attackPlayer: this.attackPlayer,
       wasTaken: this.wasTaken,
       outGameCards: this.outGameCards,
-      player1Cards: this.player1Cards,
-      player2Cards: this.player2Cards,
+      player1Cards: [...this.player1Cards],
+      player2Cards: [...this.player2Cards],
     };
   }
 
   static fromSnapshot(snapshot: GameState.Snapshot) {
     const state = new GameState();
+    const { table } = snapshot;
 
-    state._deck = snapshot.deck;
+    state._deck = [...snapshot.deck];
     state._trumpCard = snapshot.trumpCard;
-    state.table = snapshot.table;
+    state.table = {
+      attackCards: [...table.attackCards],
+      defenceCards: [...table.defenceCards],
+    };
     state.attackPlayer = snapshot.attackPlayer;
     state.wasTaken = snapshot.wasTaken;
     state.outGameCards.push(...snapshot.outGameCards);
-    state.player1Cards = snapshot.player1Cards;
-    state.player2Cards = snapshot.player2Cards;
+    state.player1Cards = [...snapshot.player1Cards];
+    state.player2Cards = [...snapshot.player2Cards];
 
     return state;
   }
