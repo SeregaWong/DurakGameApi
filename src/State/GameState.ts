@@ -1,6 +1,6 @@
 import { DurakGameApi } from "../DurakGameApi";
-import { AdvancedLocalEventStore } from "../EventStore";
 import { Event } from "../Events";
+import { AdvancedLocalEventStore } from "../EventStore";
 import { Card, PlayerIndex } from "../type";
 import { gameStateReducer } from "./Reducer";
 
@@ -27,7 +27,17 @@ export namespace GameState {
  * @description game state view
  */
 export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.IState<GameState.Snapshot> {
+
+  public table: GameState.Table = { attackCards: [], defenceCards: [] };
+  public attackPlayer: PlayerIndex = 0;
+  public wasTaken = false;
+  public readonly outGameCards: Card[] = [];
+
   private _trumpCard?: Card;
+  private _deck?: Card[];
+
+  private player1Cards: Card[] = [];
+  private player2Cards: Card[] = [];
 
   public get trumpCard(): Card {
     const { _trumpCard } = this;
@@ -39,8 +49,6 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
     return _trumpCard;
   }
 
-  private _deck?: Card[];
-
   public get deck(): Card[] {
     const { _deck } = this;
 
@@ -51,23 +59,9 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
     return _deck;
   }
 
-  public setNewDeck(v: Card[]) {
-    if (v.length != 24) {
-      throw new Error('deck is invalid');
-    }
-
-    this._deck = v;
-    this._trumpCard = v[0];
-  }
-
   public get isStarted() {
     return !!this._deck;
   }
-
-  public table: GameState.Table = { attackCards: [], defenceCards: [] };
-  public attackPlayer: PlayerIndex = 0;
-  public wasTaken = false;
-  public readonly outGameCards: Card[] = [];
 
   public get defencePlayer() {
     return this.attackPlayer === 0 ? 1 : 0;
@@ -87,8 +81,51 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
     ].flat();
   }
 
-  private player1Cards: Card[] = [];
-  private player2Cards: Card[] = [];
+  static fromSnapshot(snapshot: GameState.Snapshot) {
+    const state = new GameState();
+    const { table } = snapshot;
+
+    state._deck = [...snapshot.deck];
+    state._trumpCard = snapshot.trumpCard;
+    state.table = {
+      attackCards: [...table.attackCards],
+      defenceCards: [...table.defenceCards],
+    };
+    state.attackPlayer = snapshot.attackPlayer;
+    state.wasTaken = snapshot.wasTaken;
+    state.outGameCards.push(...snapshot.outGameCards);
+    state.player1Cards = [...snapshot.player1Cards];
+    state.player2Cards = [...snapshot.player2Cards];
+
+    return state;
+  }
+
+  toSnapshot() {
+    const { table } = this;
+
+    return {
+      deck: [...this.deck],
+      trumpCard: this.trumpCard,
+      table: {
+        attackCards: [...table.attackCards],
+        defenceCards: [...table.defenceCards],
+      },
+      attackPlayer: this.attackPlayer,
+      wasTaken: this.wasTaken,
+      outGameCards: this.outGameCards,
+      player1Cards: [...this.player1Cards],
+      player2Cards: [...this.player2Cards],
+    };
+  }
+
+  public setNewDeck(v: Card[]) {
+    if (v.length != 24) {
+      throw new Error('deck is invalid');
+    }
+
+    this._deck = v;
+    this._trumpCard = v[0];
+  }
 
   public handle(event: Event): void;
   public handle(events: Event[]): void;
@@ -159,41 +196,5 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
     } else {
       this.player2Cards = cards;
     }
-  }
-
-  toSnapshot() {
-    const { table } = this;
-    return {
-      deck: [...this.deck],
-      trumpCard: this.trumpCard,
-      table: {
-        attackCards: [...table.attackCards],
-        defenceCards: [...table.defenceCards],
-      },
-      attackPlayer: this.attackPlayer,
-      wasTaken: this.wasTaken,
-      outGameCards: this.outGameCards,
-      player1Cards: [...this.player1Cards],
-      player2Cards: [...this.player2Cards],
-    };
-  }
-
-  static fromSnapshot(snapshot: GameState.Snapshot) {
-    const state = new GameState();
-    const { table } = snapshot;
-
-    state._deck = [...snapshot.deck];
-    state._trumpCard = snapshot.trumpCard;
-    state.table = {
-      attackCards: [...table.attackCards],
-      defenceCards: [...table.defenceCards],
-    };
-    state.attackPlayer = snapshot.attackPlayer;
-    state.wasTaken = snapshot.wasTaken;
-    state.outGameCards.push(...snapshot.outGameCards);
-    state.player1Cards = [...snapshot.player1Cards];
-    state.player2Cards = [...snapshot.player2Cards];
-
-    return state;
   }
 }

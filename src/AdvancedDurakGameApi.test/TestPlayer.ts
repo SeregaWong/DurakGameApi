@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { DurakGameApi } from "../DurakGameApi";
 import { DurakPlayerApi } from "../DurakPlayerApi";
 import { DeepReadonly } from "../type";

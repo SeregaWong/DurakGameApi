@@ -1,7 +1,7 @@
-import { GameState } from "../State/GameState";
-import { Event } from "../Events";
-import { DurakGameApi } from "../DurakGameApi";
 import { AdvancedDurakGameApi } from "../AdvancedDurakGameApi";
+import { DurakGameApi } from "../DurakGameApi";
+import { Event } from "../Events";
+import { GameState } from "../State/GameState";
 
 export namespace AdvancedLocalEventStore {
 
@@ -24,6 +24,8 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
 
   private static readonly State: AdvancedLocalEventStore.IStateClass<GameState.Snapshot> = GameState;
 
+  public currentIndex: number = 0;
+
   private readonly events: Event[] = [];
 
   private snapshots: {
@@ -32,8 +34,6 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
   }[] = [];
 
   private state: AdvancedLocalEventStore.IState<GameState.Snapshot>;
-
-  public currentIndex: number = 0;
 
   constructor(...events: Event[]) {
     this.state = this.createState();
@@ -45,10 +45,6 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
 
   getState() {
     return this.state;
-  }
-
-  private createState() {
-    return new AdvancedLocalEventStore.State();
   }
 
   handle(event: Event) {
@@ -90,19 +86,6 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
     this.currentIndex = index;
   }
 
-  private getNearestSnapshot(index: number) {
-    const nearestIndex = this.snapshots
-      .map(s => s.index)
-      .sort((a, b) => b - a)
-      .find(i => i <= index);
-
-    if (!nearestIndex) {
-      return;
-    }
-
-    return this.snapshots.find(s => s.index === nearestIndex);
-  }
-
   snapshot() {
     const { currentIndex } = this;
 
@@ -118,5 +101,22 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
     if (snapshots.length > AdvancedLocalEventStore.MAX_SNAPSHOTS_AMOUNT) {
       snapshots.shift();
     }
+  }
+
+  private createState() {
+    return new AdvancedLocalEventStore.State();
+  }
+
+  private getNearestSnapshot(index: number) {
+    const nearestIndex = this.snapshots
+      .map(s => s.index)
+      .sort((a, b) => b - a)
+      .find(i => i <= index);
+
+    if (!nearestIndex) {
+      return;
+    }
+
+    return this.snapshots.find(s => s.index === nearestIndex);
   }
 }

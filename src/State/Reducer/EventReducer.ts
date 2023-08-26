@@ -1,6 +1,6 @@
+import { Event } from "../../Events/Event";
 import { GameState } from "../GameState";
 import { IStateReducer } from "./IStateReducer";
-import { Event } from "../../Events/Event";
 
 export class EventReducer<T extends Event = Event> implements IStateReducer {
   constructor(

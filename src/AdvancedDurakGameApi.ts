@@ -1,7 +1,7 @@
-import { DurakPlayerApi } from './DurakPlayerApi';
-import { AdvancedLocalEventStore } from './EventStore';
 import { DurakGame } from './DurakGame';
 import { DurakGameApi } from './DurakGameApi';
+import { DurakPlayerApi } from './DurakPlayerApi';
+import { AdvancedLocalEventStore } from './EventStore';
 
 export namespace AdvancedDurakGameApi {
   export interface IEventStore extends DurakGameApi.IEventStore {
@@ -16,16 +16,12 @@ export class AdvancedDurakGameApi extends DurakGameApi {
 
   private readonly INIT_EVENTS_AMOUNT = 3;  // [ init cards, deal cards, deal cards ]
 
+  private actionIndexes: number[] = [];
+
   constructor(...args: ConstructorParameters<typeof DurakGameApi>) {
     super(...args);
     this.store.snapshot();
   }
-
-  protected createStore(): AdvancedDurakGameApi.IEventStore {
-    return new AdvancedLocalEventStore();
-  }
-
-  private actionIndexes: number[] = [];
 
   public update(player: DurakPlayerApi, action: DurakGame.Action) {
     super.update(player, action);
@@ -44,7 +40,7 @@ export class AdvancedDurakGameApi extends DurakGameApi {
 
     const index = this.actionIndexes
       .sort((a, b) => b - a)
-      .find((index) => index < currentIndex)
+      .find((actionIndex) => actionIndex < currentIndex)
       || (currentIndex - 1);
 
     this.store.toIndex(index);
@@ -57,8 +53,8 @@ export class AdvancedDurakGameApi extends DurakGameApi {
 
     const index = this.actionIndexes
       .sort((a, b) => a - b)
-      .find((index) => index > currentIndex);
-    
+      .find((actionIndex) => actionIndex > currentIndex);
+
     if (!index) {
       return;
     }
@@ -66,5 +62,9 @@ export class AdvancedDurakGameApi extends DurakGameApi {
     this.store.toIndex(index);
 
     this.onUpdate();
+  }
+
+  protected createStore(): AdvancedDurakGameApi.IEventStore {
+    return new AdvancedLocalEventStore();
   }
 }

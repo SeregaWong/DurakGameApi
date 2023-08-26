@@ -1,6 +1,4 @@
-import { GameState } from "../GameState";
-import { IStateReducer } from "./IStateReducer";
-import { 
+import {
   AttackEvent,
   BeatenOffEvent,
   DealCardsEvent,
@@ -11,7 +9,9 @@ import {
   TakeEvent,
   InitDeckEvent,
  } from "../../Events";
+import { GameState } from "../GameState";
 import { EventReducer } from "./EventReducer";
+import { IStateReducer } from "./IStateReducer";
 
 const attackReducer = new EventReducer(AttackEvent, (state, event) => {
   const { card } = event;

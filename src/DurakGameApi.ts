@@ -1,11 +1,11 @@
+import { DurakGame } from './DurakGame';
 import { DurakPlayerApi } from './DurakPlayerApi';
 import {
   Event, WinEvent,
 } from './Events';
 import { LocalEventStore } from './EventStore';
-import { Card, PlayerIndex } from './type';
-import { DurakGame } from './DurakGame';
 import { GameState } from './State/GameState';
+import { Card, PlayerIndex } from './type';
 
 export namespace DurakGameApi {
 
@@ -50,11 +50,33 @@ export class DurakGameApi {
 
   protected readonly store: DurakGameApi.IEventStore = this.createStore();
 
+  private readonly gameLogic: DurakGameApi.IGameLogic = this.createGameLogic();
+
+  constructor(
+    private readonly player1: DurakPlayerApi,
+    private readonly player2: DurakPlayerApi,
+    private readonly onWin: DurakGameApi.WinHandler,
+  ) {
+
+    player1.setGame(this);
+    player2.setGame(this);
+
+    this.start();
+  }
+
+  public update(player: DurakPlayerApi, action: DurakGame.Action) {
+    if (player !== this.player1 && player !== this.player2) {
+      throw new Error('wrong player');
+    }
+
+    this.gameLogic.update(this.getPlayerIndex(player), action);
+
+    this.onUpdate(action);
+  }
+
   protected createStore(): DurakGameApi.IEventStore {
     return new LocalEventStore();
   }
-
-  private readonly gameLogic: DurakGameApi.IGameLogic = this.createGameLogic();
 
   protected createGameLogic(): DurakGameApi.IGameLogic {
     return new DurakGame(this.getInterfaceForGameLogic());
@@ -67,16 +89,19 @@ export class DurakGameApi {
     };
   }
 
-  constructor(
-    private readonly player1: DurakPlayerApi,
-    private readonly player2: DurakPlayerApi,
-    private readonly onWin: DurakGameApi.WinHandler,
-  ) {
 
-    player1.setGame(this);
-    player2.setGame(this);
+  protected onUpdate(action?: DurakGame.Action) {
+    const state = this.getState();
 
-    this.start();
+    this.player1.onUpdate({
+      ...(state.getPersonalState(0)),
+      action,
+    });
+
+    this.player2.onUpdate({
+      ...(state.getPersonalState(1)),
+      action,
+    });
   }
 
   private start() {
@@ -102,34 +127,11 @@ export class DurakGameApi {
     this.store.handle(event);
   }
 
-  public update(player: DurakPlayerApi, action: DurakGame.Action) {
-    if (player !== this.player1 && player !== this.player2) {
-      throw new Error('wrong player');
-    }
-
-    this.gameLogic.update(this.getPlayerIndex(player), action);
-
-    this.onUpdate(action);
-  }
-
-  protected onUpdate(action?: DurakGame.Action) {
-    const state = this.getState();
-
-    this.player1.onUpdate({
-      ...(state.getPersonalState(0)),
-      action,
-    });
-
-    this.player2.onUpdate({
-      ...(state.getPersonalState(1)),
-      action,
-    });
-  }
-
   private getPlayerIndex(player: DurakPlayerApi): PlayerIndex {
     if (player === this.player1) {
       return 0;
-    } 
+    }
+
     return 1;
   }
 }

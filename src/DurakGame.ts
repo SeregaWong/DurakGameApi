@@ -11,8 +11,8 @@ import {
   Event,
 } from './Events';
 import { shuffle } from './shuffle';
-import { Card, CardSuit, CardValue, PlayerIndex } from './type';
 import { GameState } from './State/GameState';
+import { Card, CardSuit, CardValue, PlayerIndex } from './type';
 
 export namespace DurakGame {
 
@@ -68,9 +68,9 @@ export namespace DurakGame {
     readonly trumpCard: Card;
     readonly allTableCards: Card[];
     readonly defenceCardsAmount: number;
-    getPlayerCards(playerIndex: PlayerIndex): readonly Card[];
     readonly wasTaken: boolean;
     readonly isStarted: boolean;
+    getPlayerCards(playerIndex: PlayerIndex): readonly Card[];
   }
 
   export interface IDurakGameApi {
@@ -81,12 +81,6 @@ export namespace DurakGame {
 
 export class DurakGame {
 
-  private step = 0;
-
-  private get maxAttackCardsAmountNow() {
-    return this.step === 1 ? 5 : 6;
-  }
-
   private static actionHandlersMap: {
     [P in DurakGame.ActionType]: DurakGame.ActionHandler<P>;
   } = {
@@ -95,6 +89,48 @@ export class DurakGame {
       done: (game, playerIndex) => game.done(playerIndex),
       take: (game, playerIndex) => game.take(playerIndex),
     };
+
+  private step = 0;
+
+  constructor(
+    private readonly durakGameApi: DurakGame.IDurakGameApi,
+  ) {
+  }
+
+  private get maxAttackCardsAmountNow() {
+    return this.step === 1 ? 5 : 6;
+  }
+
+  public start() {
+    const { durakGameApi } = this;
+    const state = durakGameApi.getState();
+
+    if (state.isStarted) {
+      throw new Error('already started');
+    }
+
+    durakGameApi.emit(new InitDeckEvent(this.getCardsDeck()));
+
+    this.toStep();
+  }
+
+  public update(playerIndex: PlayerIndex, action: DurakGame.Action) {
+    const actionHandler = DurakGame.actionHandlersMap[action.type] as DurakGame.ActionHandler; // fix ts
+
+    actionHandler(this, playerIndex, action);
+  }
+
+  protected getCardsDeck() {
+    const deck: Card[] = [];
+
+    for (let suit: CardSuit = 0; suit < 4; suit++) {
+      for (let val: CardValue = 0; val < 6; val++) {
+        deck.push({ suit, val });
+      }
+    }
+
+    return shuffle(deck);
+  }
 
   private attack(playerIndex: PlayerIndex, action: DurakGame.Actions.Attack): void {
     const state = this.durakGameApi.getState();
@@ -226,30 +262,6 @@ export class DurakGame {
     this.durakGameApi.emit(new TakeEvent());
   }
 
-  constructor(
-    private readonly durakGameApi: DurakGame.IDurakGameApi,
-  ) {
-  }
-
-  public start() {
-    const { durakGameApi } = this;
-    const state = durakGameApi.getState();
-
-    if (state.isStarted) {
-      throw new Error('already started');
-    }
-
-    durakGameApi.emit(new InitDeckEvent(this.getCardsDeck()));
-
-    this.toStep();
-  }
-
-  public update(playerIndex: PlayerIndex, action: DurakGame.Action) {
-    const actionHandler = DurakGame.actionHandlersMap[action.type] as DurakGame.ActionHandler; // fix ts
-
-    actionHandler(this, playerIndex, action);
-  }
-
   private toStep() {
     const { durakGameApi } = this;
     const state = durakGameApi.getState();
@@ -298,17 +310,5 @@ export class DurakGame {
       playerIndex,
       canAdd,
     ));
-  }
-
-  protected getCardsDeck() {
-    const deck: Card[] = [];
-
-    for (let suit: CardSuit = 0; suit < 4; suit++) {
-      for (let val: CardValue = 0; val < 6; val++) {
-        deck.push({ suit, val });
-      }
-    }
-
-    return shuffle(deck);
   }
 }

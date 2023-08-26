@@ -1,3 +1,4 @@
+/* eslint-disable no-debugger */
 import { InitDeckEvent, DealCardsEvent, AttackEvent } from "../Events";
 import { CardSuit, CardValue } from "../type";
 import { AdvancedLocalEventStore } from "./AdvancedLocalEventStore";
