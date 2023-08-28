@@ -177,7 +177,7 @@ export class GameState implements DurakGameApi.IState, AdvancedLocalEventStore.I
       deckCardsLeftAmount: this.deck.length,
       wasTaken: this.wasTaken,
       myCards,
-      enemyCardsAmount: myCards.length,
+      enemyCardsAmount: this.getPlayerCards(playerIndex === 0 ? 1 : 0).length,
       isAttack: playerIndex === this.attackPlayer,
     };
   }
