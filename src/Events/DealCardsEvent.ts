@@ -1,4 +1,4 @@
-import { Card, PlayerIndex } from "../type";
+import { PlayerIndex } from "../type";
 import { Event } from "./Event";
 
 export class DealCardsEvent extends Event {

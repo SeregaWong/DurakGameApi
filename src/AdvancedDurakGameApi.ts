@@ -64,7 +64,7 @@ export class AdvancedDurakGameApi extends DurakGameApi {
     this.onUpdate();
   }
 
-  protected createStore(): AdvancedDurakGameApi.IEventStore {
-    return new AdvancedLocalEventStore();
+  protected createStore(...events: Event[]): AdvancedDurakGameApi.IEventStore {
+    return new AdvancedLocalEventStore(...events);
   }
 }

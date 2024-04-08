@@ -47,6 +47,10 @@ export class AdvancedLocalEventStore implements AdvancedDurakGameApi.IEventStore
     return this.state;
   }
 
+  getEvents() {
+    return this.events;
+  }
+
   handle(event: Event) {
     if (this.currentIndex != this.events.length - 1) {
       this.events.splice(this.currentIndex + 1);

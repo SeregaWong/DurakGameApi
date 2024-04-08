@@ -3,6 +3,7 @@ import { DurakPlayerApi } from './DurakPlayerApi';
 import {
   Event, WinEvent,
 } from './Events';
+import { EventsMapper } from './EventsMapper';
 import { LocalEventStore } from './EventStore';
 import { GameState } from './State/GameState';
 import { Card, PlayerIndex } from './type';
@@ -14,6 +15,7 @@ export namespace DurakGameApi {
   export interface IEventStore {
     handle(event: Event): void;
     getState(): IState;
+    getEvents(): Event[];
   }
 
   export interface IGameLogic {
@@ -48,7 +50,7 @@ export namespace DurakGameApi {
 
 export class DurakGameApi {
 
-  protected readonly store: DurakGameApi.IEventStore = this.createStore();
+  protected store: DurakGameApi.IEventStore = this.createStore();
 
   private readonly gameLogic: DurakGameApi.IGameLogic = this.createGameLogic();
 
@@ -74,8 +76,16 @@ export class DurakGameApi {
     this.onUpdate(action);
   }
 
-  protected createStore(): DurakGameApi.IEventStore {
-    return new LocalEventStore();
+  protected createStore(...events: Event[]): DurakGameApi.IEventStore {
+    return new LocalEventStore(...events);
+  }
+
+  saveStore(): EventsMapper.SavedEvents {
+    const events = this.store.getEvents();
+    return events.map((event) => EventsMapper.mapEvent(event));
+  }
+  loadStore(...savedEvents: EventsMapper.SavedEvents) {
+     return this.store = this.createStore(...savedEvents.map((savedEvent) => EventsMapper.mapSavedEvent(savedEvent)));
   }
 
   protected createGameLogic(): DurakGameApi.IGameLogic {

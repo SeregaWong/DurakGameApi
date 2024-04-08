@@ -1,6 +1,6 @@
 {
   "name": "sw-durak-game-api",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "simple card game api",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

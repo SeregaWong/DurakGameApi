@@ -28,6 +28,10 @@ export class LocalEventStore implements DurakGameApi.IEventStore {
     return this.state;
   }
 
+  getEvents() {
+    return this.events;
+  }
+
   handle(event: Event) {
     this.events.push(event);
     this.state.handle(event);
